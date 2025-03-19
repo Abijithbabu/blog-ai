@@ -93,7 +93,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const logout = async () => {
     try {
-      await api.post("/auth/logout");
+      await axios.post("/api/auth/logout");
       setUser(null);
       router.push("/");
     } catch (error) {
