@@ -34,11 +34,18 @@ interface TrendingTopic {
 }
 
 export default function TrendingPage() {
-  const { toast } = useToast();
   const [isLoading, setIsLoading] = useState(true);
   const [trendingTopics, setTrendingTopics] = useState<TrendingTopic[]>([]);
   const [activeTab, setActiveTab] = useState("all");
   const [error, setError] = useState<string | null>(null);
+
+  const getUniqueSources = (topics: TrendingTopic[]) => {
+    return Array.from(new Set(topics.map((topic) => topic.source)));
+  };
+
+  const getTopicsBySource = (source: string) => {
+    return trendingTopics.filter((topic) => topic.source === source);
+  };
 
   const fetchTrendingTopics = async () => {
     setIsLoading(true);
@@ -64,13 +71,6 @@ export default function TrendingPage() {
   useEffect(() => {
     fetchTrendingTopics();
   }, []);
-
-  const filteredTopics =
-    activeTab === "all"
-      ? trendingTopics
-      : trendingTopics.filter(
-          (topic) => topic.source.toLowerCase() === activeTab.toLowerCase()
-        );
 
   const getSourceIcon = (source: string) => {
     switch (source.toLowerCase()) {
@@ -130,11 +130,10 @@ export default function TrendingPage() {
     );
   }
 
-  const dailyTrends = trendingTopics.filter((t) => t.source === "Daily Trends");
+  const uniqueSources = getUniqueSources(trendingTopics);
 
   return (
     <div className="min-h-screen bg-background">
-      <Navbar />
       <div className="container mx-auto py-6 px-4">
         <div className="flex items-center justify-between mb-6">
           <div>
@@ -156,13 +155,15 @@ export default function TrendingPage() {
         </div>
 
         <Tabs defaultValue="all" value={activeTab} onValueChange={setActiveTab}>
-          <TabsList className="mb-4">
+          <TabsList className="mb-6 gap-2">
             <TabsTrigger value="all">
               All Sources ({trendingTopics.length})
             </TabsTrigger>
-            <TabsTrigger value="daily">
-              Daily ({dailyTrends.length})
-            </TabsTrigger>
+            {uniqueSources.map((source) => (
+              <TabsTrigger key={source} value={source.toLowerCase()}>
+                {source} ({getTopicsBySource(source).length})
+              </TabsTrigger>
+            ))}
           </TabsList>
 
           <TabsContent value="all" className="mt-0">
@@ -173,13 +174,19 @@ export default function TrendingPage() {
             </div>
           </TabsContent>
 
-          <TabsContent value="daily" className="mt-0">
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-              {dailyTrends.map((topic, index) => (
-                <TrendCard key={index} topic={topic} />
-              ))}
-            </div>
-          </TabsContent>
+          {uniqueSources.map((source) => (
+            <TabsContent
+              key={source}
+              value={source.toLowerCase()}
+              className="mt-0"
+            >
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                {getTopicsBySource(source).map((topic, index) => (
+                  <TrendCard key={index} topic={topic} />
+                ))}
+              </div>
+            </TabsContent>
+          ))}
         </Tabs>
 
         {trendingTopics.length === 0 && !isLoading && (
@@ -202,7 +209,9 @@ function TrendCard({ topic }: { topic: TrendingTopic }) {
       <CardHeader>
         <div className="flex items-start justify-between">
           <div>
-            <CardTitle className="text-lg">{topic.title}</CardTitle>
+            <CardTitle className="text-lg line-clamp-2">
+              {topic.title}
+            </CardTitle>
             <CardDescription className="mt-1">
               {topic.source} •{" "}
               {typeof topic.traffic === "string"
@@ -223,7 +232,9 @@ function TrendCard({ topic }: { topic: TrendingTopic }) {
         </div>
       </CardHeader>
       <CardContent>
-        <p className="text-sm text-gray-600 mb-2">{topic.description}</p>
+        <p className="text-sm text-gray-600 mb-2 line-clamp-3">
+          {topic.description}
+        </p>
         <p className="text-sm font-medium text-gray-800">
           {topic.blogRelevance}
         </p>

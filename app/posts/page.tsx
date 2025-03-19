@@ -36,7 +36,7 @@ type Post = {
   featuredImage?: string;
 };
 
-export default function DashboardPage() {
+export default function BlogsPage() {
   const { user } = useAuth();
   const { toast } = useToast();
   const [posts, setPosts] = useState<Post[]>([]);
@@ -98,18 +98,22 @@ export default function DashboardPage() {
   return (
     <div className="container mx-auto py-6 px-4">
       <div className="flex items-center justify-between mb-6">
-        <h1 className="text-3xl font-bold">
-          Hey {user?.name || "there"}, let&apos;s create some blog posts!
-        </h1>
-      </div>
+        <div>
+          <h1 className="text-3xl font-bold">Your Blog Posts</h1>
+          <p className="text-muted-foreground mt-1">
+            Manage and track all your published and draft blog posts in one
+            place.
+          </p>
+        </div>
 
-      <div className="flex flex-col md:flex-row gap-4 mb-8">
-        <Link href="/write">
-          <Button className="w-full md:w-auto bg-green-500 hover:bg-green-600">
-            <PencilLine className="mr-2 h-4 w-4" />
-            Write New Post
-          </Button>
-        </Link>
+        <div className="flex flex-col md:flex-row gap-4 mb-8">
+          <Link href="/write">
+            <Button className="w-full md:w-auto">
+              <PencilLine className="mr-2 h-4 w-4" />
+              Write New Post
+            </Button>
+          </Link>
+        </div>
       </div>
 
       <Tabs defaultValue="all" value={activeTab} onValueChange={setActiveTab}>
@@ -165,7 +169,9 @@ export default function DashboardPage() {
                   </div>
 
                   <CardHeader className="p-4">
-                    <CardTitle className="line-clamp-2 text-xl">{post.title}</CardTitle>
+                    <CardTitle className="line-clamp-2 text-xl">
+                      {post.title}
+                    </CardTitle>
                     <CardDescription>
                       Created: {new Date(post.createdAt).toLocaleDateString()}
                       {post.readTime > 0 && ` • ${post.readTime} min read`}

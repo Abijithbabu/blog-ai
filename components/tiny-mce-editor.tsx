@@ -14,7 +14,7 @@ export default function TinyMCEEditor({ value, onChange, height = 500 }: TinyMCE
 
   return (
     <Editor
-      apiKey="your-tinymce-api-key" // You need to get this from TinyMCE
+      apiKey={process.env.NEXT_PUBLIC_TINYMCE_API_KEY}
       onInit={(evt, editor) => (editorRef.current = editor)}
       value={value}
       onEditorChange={onChange}

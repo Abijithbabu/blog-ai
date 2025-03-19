@@ -11,12 +11,13 @@ import { SEOAnalyzer } from "./SEOAnalyzer";
 import api from "@/axios-instance";
 import axios from "axios";
 
-interface ContentSuggestion {
+export interface ContentSuggestion {
   title: string;
   meta: string;
   keywords: string[];
   outline: string;
   wordCount: number;
+  slug: string;
 }
 
 interface SEOAnalysis {
@@ -101,13 +102,28 @@ export function ChatPanel({ onSuggestionSelect }: ChatPanelProps) {
         topic,
         wordCount,
       });
-      console.log("Received response:", response.data);
-      if (!response.data || !response.data.suggestion) {
+      
+      // Clean the response data by removing "**" from all text fields
+      const cleanedData = {
+        ...response.data,
+        suggestion: {
+          ...response.data.suggestion,
+          title: response.data.suggestion.title.replace(/\*\*/g, '').trim(),
+          meta: response.data.suggestion.meta.replace(/\*\*/g, '').trim(),
+          keywords: response.data.suggestion.keywords.map(keyword => 
+            keyword.replace(/\*\*/g, '').trim()
+          ),
+          outline: response.data.suggestion.outline.replace(/\*\*/g, '').trim(),
+        }
+      };
+
+      console.log("Cleaned response:", cleanedData);
+      if (!cleanedData || !cleanedData.suggestion) {
         throw new Error("Invalid response format");
       }
-      setResponse(response.data);
+      setResponse(cleanedData);
       // If SEO analysis is available, switch to that tab automatically
-      if (response.data.seoAnalysis) {
+      if (cleanedData.seoAnalysis) {
         setActiveTab("seo");
       }
     } catch (error) {

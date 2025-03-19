@@ -42,7 +42,7 @@ export function Sidebar({ className }: SidebarProps) {
     {
       label: "My Posts",
       icon: FileText,
-      href: "/dashboard",
+      href: "/posts",
       active: pathname.includes("/posts"),
     },
     {

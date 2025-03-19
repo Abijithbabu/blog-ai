@@ -10,6 +10,7 @@ interface User {
   name: string
   email: string
   needsOnboarding?: boolean
+  apiKey?: string
 }
 
 interface AuthContextType {
@@ -39,7 +40,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         }
 
         const response = await api.get("/auth/me")
-        setUser(response.data.user)
+        setUser(response?.data?.user)
       } catch (error) {
         console.error("Authentication check failed:", error instanceof AxiosError ? error.response?.data : error)
       } finally {
@@ -54,9 +55,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setLoading(true)
     try {
       const response = await api.post("/auth/login", { email, password })
-      setUser(response.data.user)
-console.warn(response)
-      if (response.data.needsOnboarding) {
+      setUser(response?.data?.user)
+      if (response?.data?.user?.needsOnboarding) {
         router.push("/onboarding")
       } else {
         router.push("/dashboard")

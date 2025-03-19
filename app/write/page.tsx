@@ -20,6 +20,16 @@ import {
 import { Editor } from "@tinymce/tinymce-react";
 import { ChatPanel } from "@/components/ChatPanel";
 import api from "@/axios-instance";
+import { Textarea } from "@/components/ui/textarea";
+
+// Add this interface definition before the formSchema
+interface GeneratedContent {
+  title: string;
+  meta?: string;
+  keywords?: string[];
+  body: string;
+  slug?: string;
+}
 
 interface ContentSuggestion {
   title: string;
@@ -30,11 +40,14 @@ interface ContentSuggestion {
 
 // Define form schema with zod
 const formSchema = z.object({
-  title: z.string().min(5, "Title must be at least 5 characters"),
-  content: z.string().min(50, "Content must be at least 50 characters"),
+  title: z.string().min(1, "Title is required"),
+  metaTitle: z.string().optional(),
+  description: z.string().optional(),
+  keywords: z.string().optional(),
+  content: z.string().min(1, "Content is required"),
   tags: z.string().optional(),
-  featuredImage: z.string().url("Please enter a valid image URL").optional(),
-  status: z.enum(["draft", "published"]).default("draft"),
+  featuredImage: z.string().optional(),
+  status: z.enum(["draft", "published"]),
 });
 
 type FormData = z.infer<typeof formSchema>;
@@ -44,11 +57,17 @@ export default function WritePage() {
   const { toast } = useToast();
   const [isLoading, setIsLoading] = useState(false);
   const [showChat, setShowChat] = useState(false);
+  const [imagePreview, setImagePreview] = useState<string | null>(null);
+  const [isGenerating, setIsGenerating] = useState(false);
+  const [generatedContent, setGeneratedContent] = useState<GeneratedContent | null>(null);
 
-  const form = useForm<FormData>({
+  const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
       title: "",
+      metaTitle: "",
+      description: "",
+      keywords: "",
       content: "",
       tags: "",
       featuredImage: "",
@@ -56,13 +75,31 @@ export default function WritePage() {
     },
   });
 
-  const onSubmit = async (data: FormData) => {
+  const onSubmit = async (data: FormData, status: "draft" | "published") => {
     setIsLoading(true);
     try {
-      await api.post("/posts", data);
+      let imageUrl = null;
+      
+      if (imagePreview) {
+        imageUrl = await uploadToCloudinary(imagePreview);
+        if (!imageUrl) {
+          setIsLoading(false);
+          return;
+        }
+      }
+
+      await api.post("/posts", {
+        ...data,
+        status,
+        featuredImage: imageUrl,
+        createdAt: new Date().toISOString(),
+      });
+
       toast({
         title: "Success!",
-        description: "Your blog post has been created.",
+        description: status === "published" 
+          ? "Your blog post has been published." 
+          : "Your blog post has been saved as draft.",
       });
       router.push("/dashboard");
     } catch (error) {
@@ -81,13 +118,80 @@ export default function WritePage() {
 
   const handleSuggestionSelect = (suggestion: ContentSuggestion) => {
     form.setValue("title", suggestion.title);
+    form.setValue("metaTitle", suggestion.title);
+    form.setValue("description", suggestion.meta);
+    form.setValue("keywords", suggestion.keywords.join(", "));
     form.setValue("content", suggestion.outline);
     form.setValue("tags", suggestion.keywords.join(", "));
   };
 
+  const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+
+    if (file) {
+      // Set preview
+      const reader = new FileReader()
+      reader.onloadend = () => {
+        setImagePreview(reader.result as string)
+      }
+      reader.readAsDataURL(file)
+    } else {
+      setImagePreview(null)
+    }
+  }
+
+  const uploadToCloudinary = async (imagePreview: string) => {
+    try {
+      const cloudName = process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME;
+      const uploadPreset = process.env.NEXT_PUBLIC_CLOUDINARY_UPLOAD_PRESET;
+
+      if (!cloudName || !uploadPreset) {
+        throw new Error('Cloudinary configuration is missing. Please check your environment variables.');
+      }
+
+      // Create a FormData instance
+      const formData = new FormData();
+      
+      // Convert base64 to blob
+      const base64Response = await fetch(imagePreview);
+      const blob = await base64Response.blob();
+      
+      // Add the file to formData
+      formData.append('file', blob);
+      formData.append('upload_preset', uploadPreset);
+      
+      // Upload to Cloudinary
+      const uploadResponse = await fetch(
+        `https://api.cloudinary.com/v1_1/${cloudName}/image/upload`,
+        {
+          method: 'POST',
+          body: formData,
+        }
+      );
+
+      if (!uploadResponse.ok) {
+        const errorData = await uploadResponse.json();
+        throw new Error(`Cloudinary upload failed: ${errorData.error?.message || 'Unknown error'}`);
+      }
+
+      const uploadData = await uploadResponse.json();
+      return uploadData.secure_url;
+
+    } catch (error) {
+      console.error("Cloudinary upload failed:", error);
+      const errorMessage = error instanceof Error ? error.message : 'Failed to upload image';
+      toast({
+        title: "Image Upload Failed",
+        description: errorMessage,
+        variant: "destructive",
+      });
+      return null;
+    }
+  };
+
   return (
     <div className="flex min-h-screen">
-      <div className="flex-1">
+      <div className={`flex-1 ${showChat ? 'w-2/3' : 'w-full'}`}>
         <div className="container py-6 px-4">
           <div className="mb-6 flex justify-between items-center">
             <div>
@@ -96,17 +200,22 @@ export default function WritePage() {
                 Create and publish your blog post
               </p>
             </div>
-            <Button variant="outline" onClick={() => setShowChat(!showChat)}>
-              {showChat ? "Hide Research" : "Research Content"}
-            </Button>
+            <div className="flex gap-4">
+              <Button variant="outline" onClick={() => setShowChat(!showChat)}>
+                {showChat ? "Hide Research" : "Research Content"}
+              </Button>
+              <Button
+                variant="outline"
+                onClick={() => router.push("/dashboard")}
+              >
+                Cancel
+              </Button>
+            </div>
           </div>
 
-          <div className="max-w-4xl">
+          <div className="max-w-4xl pb-8">
             <Form {...form}>
-              <form
-                onSubmit={form.handleSubmit(onSubmit)}
-                className="space-y-6"
-              >
+              <form className="space-y-8">
                 <FormField
                   control={form.control}
                   name="title"
@@ -114,11 +223,65 @@ export default function WritePage() {
                     <FormItem>
                       <FormLabel>Title</FormLabel>
                       <FormControl>
-                        <Input
-                          placeholder="Enter your blog post title"
-                          {...field}
+                        <Input placeholder="Enter your blog title" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                <FormField
+                  control={form.control}
+                  name="metaTitle"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Meta Title</FormLabel>
+                      <FormControl>
+                        <Input placeholder="Enter meta title for SEO" {...field} />
+                      </FormControl>
+                      <FormDescription>
+                        This will be used as the title in search engine results
+                      </FormDescription>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                <FormField
+                  control={form.control}
+                  name="description"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Meta Description</FormLabel>
+                      <FormControl>
+                        <Textarea 
+                          placeholder="Enter meta description for SEO" 
+                          {...field} 
                         />
                       </FormControl>
+                      <FormDescription>
+                        This will appear in search engine results
+                      </FormDescription>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                <FormField
+                  control={form.control}
+                  name="keywords"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Keywords</FormLabel>
+                      <FormControl>
+                        <Input 
+                          placeholder="Enter keywords (comma separated)" 
+                          {...field} 
+                        />
+                      </FormControl>
+                      <FormDescription>
+                        Keywords help with SEO. Separate with commas
+                      </FormDescription>
                       <FormMessage />
                     </FormItem>
                   )}
@@ -199,15 +362,43 @@ export default function WritePage() {
                 <FormField
                   control={form.control}
                   name="featuredImage"
-                  render={({ field }) => (
+                  render={({ field: { onChange, ...field } }) => (
                     <FormItem>
-                      <FormLabel>Featured Image URL</FormLabel>
+                      <FormLabel>Featured Image</FormLabel>
                       <FormControl>
-                        <Input
-                          placeholder="Enter the URL of your featured image"
-                          {...field}
-                        />
+                        <div className="space-y-4">
+                          <Input
+                            type="file"
+                            accept="image/*"
+                            onChange={(e) => {
+                              handleImageChange(e);
+                              onChange(e);
+                            }}
+                            {...field}
+                          />
+                          {imagePreview && (
+                            <div className="relative w-full h-48 rounded-md overflow-hidden">
+                              <img
+                                src={imagePreview}
+                                alt="Preview"
+                                className="w-full h-full object-cover"
+                              />
+                              <Button
+                                variant="destructive"
+                                size="sm"
+                                className="absolute top-2 right-2"
+                                onClick={() => {
+                                  setImagePreview(null);
+                                  onChange("");
+                                }}
+                              >
+                                Remove
+                              </Button>
+                            </div>
+                          )}
+                        </div>
                       </FormControl>
+                      <FormDescription>Upload an image for your blog post</FormDescription>
                       <FormMessage />
                     </FormItem>
                   )}
@@ -215,15 +406,21 @@ export default function WritePage() {
 
                 <div className="flex gap-4">
                   <Button
-                    type="submit"
-                    onClick={() => form.setValue("status", "draft")}
+                    type="button"
+                    onClick={() => {
+                      form.setValue("status", "draft");
+                      form.handleSubmit((data) => onSubmit(data, "draft"))();
+                    }}
                     disabled={isLoading}
                   >
                     {isLoading ? "Saving..." : "Save as Draft"}
                   </Button>
                   <Button
-                    type="submit"
-                    onClick={() => form.setValue("status", "published")}
+                    type="button"
+                    onClick={() => {
+                      form.setValue("status", "published");
+                      form.handleSubmit((data) => onSubmit(data, "published"))();
+                    }}
                     disabled={isLoading}
                     variant="default"
                   >
@@ -236,7 +433,11 @@ export default function WritePage() {
         </div>
       </div>
 
-      {showChat && <ChatPanel onSuggestionSelect={handleSuggestionSelect} />}
+      {showChat && (
+        <div className="w-1/3 border-l">
+          <ChatPanel onSuggestionSelect={handleSuggestionSelect} />
+        </div>
+      )}
     </div>
   );
 }
