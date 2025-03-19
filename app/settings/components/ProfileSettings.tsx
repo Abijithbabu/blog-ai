@@ -20,26 +20,30 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { RefreshCw, User, Mail, Lock, AlertTriangle } from "lucide-react";
-import { useRef, useState } from "react";
+import { useRef, useState, useEffect } from "react";
 import { useToast } from "@/components/ui/use-toast";
 import api from "@/axios-instance";
+import { useAuth } from "@/context/auth-context";
 
 const profileFormSchema = z
   .object({
     name: z.string().min(2, "Name must be at least 2 characters"),
     email: z.string().email("Please enter a valid email address"),
-    password: z.string().optional().refine(
-      (val) => {
-        // If password is provided, it must be at least 6 characters
-        if (val && val.length > 0) {
-          return val.length >= 6;
+    password: z
+      .string()
+      .optional()
+      .refine(
+        (val) => {
+          // If password is provided, it must be at least 6 characters
+          if (val && val.length > 0) {
+            return val.length >= 6;
+          }
+          return true;
+        },
+        {
+          message: "Password must be at least 6 characters",
         }
-        return true;
-      },
-      {
-        message: "Password must be at least 6 characters",
-      }
-    ),
+      ),
     confirmPassword: z.string().optional(),
   })
   .refine(
@@ -58,20 +62,9 @@ const profileFormSchema = z
 
 export type ProfileFormData = z.infer<typeof profileFormSchema>;
 
-interface ProfileSettingsProps {
-  user: any;
-  isLoading: boolean;
-  onSubmit: (data: ProfileFormData) => Promise<void>;
-  onDeleteAccount: () => void;
-}
-
-export function ProfileSettings({
-  user,
-  isLoading: externalLoading,
-  onSubmit,
-  onDeleteAccount,
-}: ProfileSettingsProps) {
+export function ProfileSettings() {
   const { toast } = useToast();
+  const { user, setUser } = useAuth();
   const [isLoading, setIsLoading] = useState(false);
   const formRef = useRef<HTMLFormElement>(null);
   const form = useForm<ProfileFormData>({
@@ -84,6 +77,18 @@ export function ProfileSettings({
     },
   });
 
+  // Update form when user data changes
+  useEffect(() => {
+    if (user) {
+      form.reset({
+        name: user.name || "",
+        email: user.email || "",
+        password: "",
+        confirmPassword: "",
+      });
+    }
+  }, [user, form]);
+
   const handleSubmit = async (data: ProfileFormData) => {
     try {
       setIsLoading(true);
@@ -95,6 +100,7 @@ export function ProfileSettings({
         });
 
         if (profileResponse.data?.status === "success") {
+          setUser(user ? { ...user, name: data.name } : null);
           toast({
             title: "Success",
             description: "Profile updated successfully",
@@ -118,11 +124,6 @@ export function ProfileSettings({
           form.setValue("confirmPassword", "");
         }
       }
-
-      // Call external onSubmit if provided
-      if (onSubmit) {
-        await onSubmit(data);
-      }
     } catch (error: any) {
       console.error("Error updating profile:", error);
       toast({
@@ -135,8 +136,6 @@ export function ProfileSettings({
       setIsLoading(false);
     }
   };
-
-  const isSubmitting = isLoading || externalLoading;
 
   return (
     <div className="space-y-6">
@@ -251,11 +250,11 @@ export function ProfileSettings({
               </div>
               <Button
                 type="button"
-                disabled={isSubmitting}
+                disabled={isLoading}
                 size="sm"
                 onClick={() => formRef.current?.requestSubmit()}
               >
-                {isSubmitting ? (
+                {isLoading ? (
                   <>
                     <RefreshCw className="mr-2 h-4 w-4 animate-spin" />
                     Saving...

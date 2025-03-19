@@ -66,15 +66,7 @@ const personalizeFormSchema = z.object({
 
 export type PersonalizeFormData = z.infer<typeof personalizeFormSchema>;
 
-interface PersonalizeSettingsProps {
-  isLoading: boolean;
-  onSubmit?: (data: PersonalizeFormData) => Promise<void>;
-}
-
-export function PersonalizeSettings({
-  isLoading: externalLoading,
-  onSubmit,
-}: PersonalizeSettingsProps) {
+export function PersonalizeSettings() {
   const { toast } = useToast();
   const [isLoading, setIsLoading] = useState(false);
   const [isFetching, setIsFetching] = useState(true);
@@ -130,11 +122,6 @@ export function PersonalizeSettings({
           title: "Success",
           description: "Business settings saved successfully",
         });
-
-        // If there's an external submit handler, call it
-        if (onSubmit) {
-          await onSubmit(data);
-        }
       }
     } catch (error) {
       console.error("Error saving business settings:", error);
@@ -156,8 +143,6 @@ export function PersonalizeSettings({
     );
   }
 
-  const isSubmitting = isLoading || externalLoading;
-
   return (
     <div className="grid gap-6 lg:grid-cols-2">
       <div className="sticky top-0 col-span-2 z-10 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 border-b">
@@ -165,11 +150,11 @@ export function PersonalizeSettings({
           <h2 className="text-lg font-semibold">Personalization</h2>
           <Button
             type="button"
-            disabled={isSubmitting}
+            disabled={isLoading}
             size="sm"
             onClick={() => formRef.current?.requestSubmit()}
           >
-            {isSubmitting ? (
+            {isLoading ? (
               <>
                 <RefreshCw className="mr-2 h-4 w-4 animate-spin" />
                 Saving...

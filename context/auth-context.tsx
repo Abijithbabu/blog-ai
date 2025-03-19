@@ -1,100 +1,108 @@
-"use client"
+"use client";
 
-import { createContext, useContext, useState, useEffect, type ReactNode } from "react"
-import { useRouter } from "next/navigation"
-import { AxiosError } from "axios"
-import api from "@/axios-instance"
+import {
+  createContext,
+  useContext,
+  useState,
+  useEffect,
+  type ReactNode,
+} from "react";
+import { useRouter } from "next/navigation";
+import axios, { AxiosError } from "axios";
+import api from "@/axios-instance";
 
 interface User {
-  id: string
-  name: string
-  email: string
-  needsOnboarding?: boolean
-  apiKey?: string
+  id: string;
+  name: string;
+  email: string;
+  needsOnboarding?: boolean;
+  apiKey?: string;
 }
 
 interface AuthContextType {
-  user: User | null
-  setUser: (user: User | null) => void
-  loading: boolean
-  login: (email: string, password: string) => Promise<void>
-  signup: (name: string, email: string, password: string) => Promise<void>
-  logout: () => void
-  isAuthenticated: boolean
+  user: User | null;
+  setUser: (user: User | null) => void;
+  loading: boolean;
+  login: (email: string, password: string) => Promise<void>;
+  signup: (name: string, email: string, password: string) => Promise<void>;
+  logout: () => void;
+  isAuthenticated: boolean;
 }
 
-const AuthContext = createContext<AuthContextType | undefined>(undefined)
+const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export function AuthProvider({ children }: { children: ReactNode }) {
-  const [user, setUser] = useState<User | null>(null)
-  const [loading, setLoading] = useState(true)
-  const router = useRouter()
+  const [user, setUser] = useState<User | null>(null);
+  const [loading, setLoading] = useState(true);
+  const router = useRouter();
 
   useEffect(() => {
     const checkAuthStatus = async () => {
       try {
-        const token = document.cookie.includes("auth-token")
-        if (!token) {
-          setLoading(false)
-          return
-        }
-
-        const response = await api.get("/auth/me")
-        setUser(response?.data?.user)
+        const response = await api.get("/auth/me");
+        setUser(response?.data?.user);
       } catch (error) {
-        console.error("Authentication check failed:", error instanceof AxiosError ? error.response?.data : error)
+        console.error(
+          "Authentication check failed:",
+          error instanceof AxiosError ? error.response?.data : error
+        );
       } finally {
-        setLoading(false)
+        setLoading(false);
       }
-    }
+    };
 
-    checkAuthStatus()
-  }, [])
+    checkAuthStatus();
+  }, []);
 
   const login = async (email: string, password: string) => {
-    setLoading(true)
+    setLoading(true);
     try {
-      const response = await api.post("/auth/login", { email, password })
-      setUser(response?.data?.user)
+      const response = await axios.post("/api/auth/login", { email, password });
+      setUser(response?.data?.user);
       if (response?.data?.user?.needsOnboarding) {
-        router.push("/onboarding")
+        router.push("/onboarding");
       } else {
-        router.push("/dashboard")
+        router.push("/dashboard");
       }
     } catch (error) {
-      const message = error instanceof AxiosError 
-        ? error.response?.data?.message || "Login failed"
-        : "Login failed. Please check your credentials."
-      throw new Error(message)
+      const message =
+        error instanceof AxiosError
+          ? error.response?.data?.message || "Login failed"
+          : "Login failed. Please check your credentials.";
+      throw new Error(message);
     } finally {
-      setLoading(false)
+      setLoading(false);
     }
-  }
+  };
 
   const signup = async (name: string, email: string, password: string) => {
-    setLoading(true)
+    setLoading(true);
     try {
-      await api.post("/auth/signup", { name, email, password })
-      router.push("/login")
+      await api.post("/auth/signup", { name, email, password });
+      router.push("/login");
     } catch (error) {
-      const message = error instanceof AxiosError 
-        ? error.response?.data?.message || "Signup failed"
-        : "Signup failed. This email might already be in use."
-      throw new Error(message)
+      const message =
+        error instanceof AxiosError
+          ? error.response?.data?.message || "Signup failed"
+          : "Signup failed. This email might already be in use.";
+      throw new Error(message);
     } finally {
-      setLoading(false)
+      setLoading(false);
     }
-  }
+  };
 
   const logout = async () => {
     try {
-      await api.post("/auth/logout")
-      setUser(null)
-      router.push("/")
+      await api.post("/auth/logout");
+      setUser(null);
+      router.push("/");
     } catch (error) {
-      console.error("Logout failed:", error instanceof AxiosError ? error.response?.data : error)
+      console.error(
+        "Logout failed:",
+        error instanceof AxiosError ? error.response?.data : error
+      );
     }
-  }
+  };
 
   return (
     <AuthContext.Provider
@@ -110,14 +118,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     >
       {children}
     </AuthContext.Provider>
-  )
+  );
 }
 
 export function useAuth() {
-  const context = useContext(AuthContext)
+  const context = useContext(AuthContext);
   if (context === undefined) {
-    throw new Error("useAuth must be used within an AuthProvider")
+    throw new Error("useAuth must be used within an AuthProvider");
   }
-  return context
+  return context;
 }
-
