@@ -31,20 +31,33 @@ import {
 } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
 import { RefreshCw } from "lucide-react";
+import { Textarea } from "@/components/ui/textarea";
 
 const personalizeFormSchema = z.object({
   businessName: z
     .string()
     .min(2, "Business name must be at least 2 characters"),
   industry: z.enum([
-    "ecommerce",
-    "health",
-    "tech",
-    "finance",
-    "education",
-    "travel",
-    "food",
-    "other",
+    "Agriculture & Forestry",
+    "Automotive & Transportation",
+    "Aerospace & Defense",
+    "Banking & Finance",
+    "Construction & Real Estate",
+    "Consumer Goods & Retail",
+    "E-commerce",
+    "Education & E-learning",
+    "Energy & Utilities",
+    "Entertainment & Media",
+    "Food & Beverage",
+    "Healthcare & Pharmaceuticals",
+    "Hospitality & Tourism",
+    "Information Technology (IT) & Software",
+    "Manufacturing & Industrial",
+    "Marketing & Advertising",
+    "Mining & Metals",
+    "Professional Services",
+    "Telecommunications",
+    "Logistics & Supply Chain",
   ]),
   targetAudience: z
     .string()
@@ -66,6 +79,29 @@ const personalizeFormSchema = z.object({
 
 export type PersonalizeFormData = z.infer<typeof personalizeFormSchema>;
 
+const industries = [
+  "Agriculture & Forestry",
+  "Automotive & Transportation",
+  "Aerospace & Defense",
+  "Banking & Finance",
+  "Construction & Real Estate",
+  "Consumer Goods & Retail",
+  "E-commerce",
+  "Education & E-learning",
+  "Energy & Utilities",
+  "Entertainment & Media",
+  "Food & Beverage",
+  "Healthcare & Pharmaceuticals",
+  "Hospitality & Tourism",
+  "Information Technology (IT) & Software",
+  "Manufacturing & Industrial",
+  "Marketing & Advertising",
+  "Mining & Metals",
+  "Professional Services",
+  "Telecommunications",
+  "Logistics & Supply Chain",
+] as const;
+
 export function PersonalizeSettings() {
   const { toast } = useToast();
   const [isLoading, setIsLoading] = useState(false);
@@ -76,7 +112,7 @@ export function PersonalizeSettings() {
     resolver: zodResolver(personalizeFormSchema),
     defaultValues: {
       businessName: "",
-      industry: "other",
+      industry: "Information Technology (IT) & Software",
       targetAudience: "",
       primaryKeywords: "",
       contentPreferences: {
@@ -217,18 +253,11 @@ export function PersonalizeSettings() {
                           </SelectTrigger>
                         </FormControl>
                         <SelectContent>
-                          <SelectItem value="ecommerce">E-commerce</SelectItem>
-                          <SelectItem value="health">
-                            Health & Wellness
-                          </SelectItem>
-                          <SelectItem value="tech">Technology</SelectItem>
-                          <SelectItem value="finance">Finance</SelectItem>
-                          <SelectItem value="education">Education</SelectItem>
-                          <SelectItem value="travel">
-                            Travel & Hospitality
-                          </SelectItem>
-                          <SelectItem value="food">Food & Beverage</SelectItem>
-                          <SelectItem value="other">Other</SelectItem>
+                          {industries.map((industry) => (
+                            <SelectItem key={industry} value={industry}>
+                              {industry}
+                            </SelectItem>
+                          ))}
                         </SelectContent>
                       </Select>
                       <FormMessage />
@@ -245,7 +274,7 @@ export function PersonalizeSettings() {
                     <FormItem>
                       <FormLabel>Target Audience</FormLabel>
                       <FormControl>
-                        <Input
+                        <Textarea
                           placeholder="e.g., Small business owners, Tech enthusiasts"
                           {...field}
                         />
@@ -265,7 +294,7 @@ export function PersonalizeSettings() {
                     <FormItem>
                       <FormLabel>Primary Keywords</FormLabel>
                       <FormControl>
-                        <Input
+                        <Textarea
                           placeholder="e.g., digital marketing, SEO, content strategy"
                           {...field}
                         />

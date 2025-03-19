@@ -21,40 +21,6 @@ export function Navbar() {
         <Link href="/dashboard" className="flex items-center gap-2">
           <span className="text-xl font-bold">BlogAI</span>
         </Link>
-        <nav className="hidden gap-6 md:flex">
-          <Link
-            href="/dashboard"
-            className={`text-sm font-medium ${
-              pathname === "/dashboard" ? "text-primary" : "text-muted-foreground"
-            } transition-colors hover:text-primary`}
-          >
-            Dashboard
-          </Link>
-          <Link
-            href="/write"
-            className={`text-sm font-medium ${
-              pathname === "/write" ? "text-primary" : "text-muted-foreground"
-            } transition-colors hover:text-primary`}
-          >
-            Write
-          </Link>
-          <Link
-            href="/generate"
-            className={`text-sm font-medium ${
-              pathname === "/generate" ? "text-primary" : "text-muted-foreground"
-            } transition-colors hover:text-primary`}
-          >
-            Generate
-          </Link>
-          <Link
-            href="/settings"
-            className={`text-sm font-medium ${
-              pathname === "/settings" ? "text-primary" : "text-muted-foreground"
-            } transition-colors hover:text-primary`}
-          >
-            Settings
-          </Link>
-        </nav>
         <div className="flex items-center gap-4">
           {isAuthenticated && (
             <div className="flex items-center gap-4">
