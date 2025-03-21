@@ -93,7 +93,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const logout = async () => {
     try {
-      await axios.post("/auth/logout");
+      await axios.post("/api/auth/logout");
       Cookies.remove("auth-token", {
         domain: process.env.NEXT_PUBLIC_COOKIE_DOMAIN,
         path: "/",
