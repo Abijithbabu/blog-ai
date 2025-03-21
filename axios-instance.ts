@@ -23,7 +23,13 @@ api.interceptors.response.use(
       // Only handle token invalidation once
       if (errorMessage === "Invalid token") {
         console.warn("Auth Error:", errorMessage);
-        Cookies.remove("auth-token");
+        // Remove cookie with proper domain configuration
+        Cookies.remove("auth-token", {
+          domain: process.env.NEXT_PUBLIC_COOKIE_DOMAIN,
+          path: "/",
+          secure: true,
+          sameSite: "strict",
+        });
         if (
           typeof window !== "undefined" &&
           window.location.pathname !== "/login"
