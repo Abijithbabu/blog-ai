@@ -20,17 +20,27 @@ import {
 import { Editor } from "@tinymce/tinymce-react";
 import api from "@/axios-instance";
 import { Textarea } from "@/components/ui/textarea";
+import { slugify } from "@/lib/utils";
 
 // Define form schema with zod
 const formSchema = z.object({
-  title: z.string().min(5, "Title must be at least 5 characters"),
+  title: z
+    .string()
+    .min(5, "Title must be at least 5 characters")
+    .max(100, "Title must be less than 100 characters"),
   metaTitle: z.string().optional(),
   description: z.string().optional(),
   keywords: z.string().optional(),
-  content: z.string().min(50, "Content must be at least 50 characters"),
+  content: z.string().min(100, "Content must be at least 100 characters"),
   tags: z.string().optional(),
   featuredImage: z.string().optional(),
-  slug: z.string().optional(),
+  slug: z
+    .string()
+    .min(5, "Slug must be at least 5 characters")
+    .max(100, "Slug must be less than 100 characters")
+    .regex(/^[a-z0-9]+(?:-[a-z0-9]+)*$/, {
+      message: "Slug must contain only lowercase letters, numbers, and hyphens",
+    }),
   status: z.enum(["draft", "published"]).default("draft"),
 });
 
@@ -59,20 +69,34 @@ export default function EditPage() {
     },
   });
 
+  // Watch the title field to auto-generate slug
+  const title = form.watch("title");
+
+  useEffect(() => {
+    // Only auto-generate slug if the slug field hasn't been manually edited
+    if (!form.getValues("slug")) {
+      const generatedSlug = slugify(title);
+      form.setValue("slug", generatedSlug, {
+        shouldValidate: true,
+        shouldDirty: true,
+      });
+    }
+  }, [title, form]);
+
   const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0]
+    const file = e.target.files?.[0];
 
     if (file) {
       // Set preview
-      const reader = new FileReader()
+      const reader = new FileReader();
       reader.onloadend = () => {
-        setImagePreview(reader.result as string)
-      }
-      reader.readAsDataURL(file)
+        setImagePreview(reader.result as string);
+      };
+      reader.readAsDataURL(file);
     } else {
-      setImagePreview(null)
+      setImagePreview(null);
     }
-  }
+  };
 
   const uploadToCloudinary = async (imagePreview: string) => {
     try {
@@ -80,40 +104,46 @@ export default function EditPage() {
       const uploadPreset = process.env.NEXT_PUBLIC_CLOUDINARY_UPLOAD_PRESET;
 
       if (!cloudName || !uploadPreset) {
-        throw new Error('Cloudinary configuration is missing. Please check your environment variables.');
+        throw new Error(
+          "Cloudinary configuration is missing. Please check your environment variables."
+        );
       }
 
       // Create a FormData instance
       const formData = new FormData();
-      
+
       // Convert base64 to blob
       const base64Response = await fetch(imagePreview);
       const blob = await base64Response.blob();
-      
+
       // Add the file to formData
-      formData.append('file', blob);
-      formData.append('upload_preset', uploadPreset);
-      
+      formData.append("file", blob);
+      formData.append("upload_preset", uploadPreset);
+
       // Upload to Cloudinary
       const uploadResponse = await fetch(
         `https://api.cloudinary.com/v1_1/${cloudName}/image/upload`,
         {
-          method: 'POST',
+          method: "POST",
           body: formData,
         }
       );
 
       if (!uploadResponse.ok) {
         const errorData = await uploadResponse.json();
-        throw new Error(`Cloudinary upload failed: ${errorData.error?.message || 'Unknown error'}`);
+        throw new Error(
+          `Cloudinary upload failed: ${
+            errorData.error?.message || "Unknown error"
+          }`
+        );
       }
 
       const uploadData = await uploadResponse.json();
       return uploadData.secure_url;
-
     } catch (error) {
       console.error("Cloudinary upload failed:", error);
-      const errorMessage = error instanceof Error ? error.message : 'Failed to upload image';
+      const errorMessage =
+        error instanceof Error ? error.message : "Failed to upload image";
       toast({
         title: "Image Upload Failed",
         description: errorMessage,
@@ -166,9 +196,9 @@ export default function EditPage() {
     setIsLoading(true);
     try {
       let imageUrl = data.featuredImage;
-      
+
       // Only upload to Cloudinary if there's a new image preview
-      if (imagePreview && !imagePreview.startsWith('http')) {
+      if (imagePreview && !imagePreview.startsWith("http")) {
         imageUrl = await uploadToCloudinary(imagePreview);
         console.log("Image URL:", imageUrl);
         if (!imageUrl) {
@@ -211,13 +241,19 @@ export default function EditPage() {
 
   return (
     <div className="flex h-screen overflow-hidden">
-      <div className={`flex-1 transition-all duration-200 ${showChat ? 'w-2/3' : 'w-full'}`}>
+      <div
+        className={`flex-1 transition-all duration-200 ${
+          showChat ? "w-2/3" : "w-full"
+        }`}
+      >
         <div className="h-full flex flex-col">
           <div className="flex-none border-b p-4">
             <div className="container flex justify-between items-center">
               <div>
                 <h1 className="text-3xl font-bold">Edit Blog Post</h1>
-                <p className="text-muted-foreground mt-1">Update your blog post</p>
+                <p className="text-muted-foreground mt-1">
+                  Update your blog post
+                </p>
               </div>
             </div>
           </div>
@@ -245,7 +281,50 @@ export default function EditPage() {
                       </FormItem>
                     )}
                   />
-
+                  <FormField
+                    control={form.control}
+                    name="slug"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>URL Slug</FormLabel>
+                        <FormControl>
+                          <div className="flex gap-2">
+                            <Input
+                              placeholder="url-friendly-slug"
+                              {...field}
+                              onChange={(e) => {
+                                // Convert to lowercase and replace spaces with hyphens
+                                const value = e.target.value
+                                  .toLowerCase()
+                                  .replace(/\s+/g, "-");
+                                field.onChange(value);
+                              }}
+                            />
+                            <Button
+                              type="button"
+                              variant="outline"
+                              onClick={() => {
+                                const generatedSlug = slugify(
+                                  form.getValues("title")
+                                );
+                                form.setValue("slug", generatedSlug, {
+                                  shouldValidate: true,
+                                  shouldDirty: true,
+                                });
+                              }}
+                            >
+                              Generate from Title
+                            </Button>
+                          </div>
+                        </FormControl>
+                        <FormDescription>
+                          The URL-friendly version of the title (e.g.,
+                          my-blog-post)
+                        </FormDescription>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
                   <FormField
                     control={form.control}
                     name="metaTitle"
@@ -426,27 +505,8 @@ export default function EditPage() {
                           </div>
                         </FormControl>
                         <FormDescription>
-                          Upload a new image or use the existing one. Supported formats: JPG, PNG, GIF
-                        </FormDescription>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-
-                  <FormField
-                    control={form.control}
-                    name="slug"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>URL Slug</FormLabel>
-                        <FormControl>
-                          <Input
-                            placeholder="Enter URL slug"
-                            {...field}
-                          />
-                        </FormControl>
-                        <FormDescription>
-                          The URL-friendly version of the title (e.g., my-blog-post)
+                          Upload a new image or use the existing one. Supported
+                          formats: JPG, PNG, GIF
                         </FormDescription>
                         <FormMessage />
                       </FormItem>

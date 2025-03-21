@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
@@ -21,6 +21,7 @@ import { Editor } from "@tinymce/tinymce-react";
 import { ChatPanel } from "@/components/ChatPanel";
 import api from "@/axios-instance";
 import { Textarea } from "@/components/ui/textarea";
+import { slugify } from "@/lib/utils";
 
 // Add this interface definition before the formSchema
 interface GeneratedContent {
@@ -40,11 +41,21 @@ interface ContentSuggestion {
 
 // Define form schema with zod
 const formSchema = z.object({
-  title: z.string().min(1, "Title is required"),
+  title: z
+    .string()
+    .min(5, "Title must be at least 5 characters")
+    .max(100, "Title must be less than 100 characters"),
+  slug: z
+    .string()
+    .min(5, "Slug must be at least 5 characters")
+    .max(100, "Slug must be less than 100 characters")
+    .regex(/^[a-z0-9]+(?:-[a-z0-9]+)*$/, {
+      message: "Slug must contain only lowercase letters, numbers, and hyphens",
+    }),
   metaTitle: z.string().optional(),
   description: z.string().optional(),
   keywords: z.string().optional(),
-  content: z.string().min(1, "Content is required"),
+  content: z.string().min(100, "Content must be at least 100 characters"),
   tags: z.string().optional(),
   featuredImage: z.string().optional(),
   status: z.enum(["draft", "published"]),
@@ -59,12 +70,14 @@ export default function WritePage() {
   const [showChat, setShowChat] = useState(false);
   const [imagePreview, setImagePreview] = useState<string | null>(null);
   const [isGenerating, setIsGenerating] = useState(false);
-  const [generatedContent, setGeneratedContent] = useState<GeneratedContent | null>(null);
+  const [generatedContent, setGeneratedContent] =
+    useState<GeneratedContent | null>(null);
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
       title: "",
+      slug: "",
       metaTitle: "",
       description: "",
       keywords: "",
@@ -75,11 +88,25 @@ export default function WritePage() {
     },
   });
 
+  // Watch the title field to auto-generate slug
+  const title = form.watch("title");
+
+  useEffect(() => {
+    // Only auto-generate slug if the slug field hasn't been manually edited
+    if (!form.getValues("slug")) {
+      const generatedSlug = slugify(title);
+      form.setValue("slug", generatedSlug, {
+        shouldValidate: true,
+        shouldDirty: true,
+      });
+    }
+  }, [title, form]);
+
   const onSubmit = async (data: FormData, status: "draft" | "published") => {
     setIsLoading(true);
     try {
       let imageUrl = null;
-      
+
       if (imagePreview) {
         imageUrl = await uploadToCloudinary(imagePreview);
         if (!imageUrl) {
@@ -97,9 +124,10 @@ export default function WritePage() {
 
       toast({
         title: "Success!",
-        description: status === "published" 
-          ? "Your blog post has been published." 
-          : "Your blog post has been saved as draft.",
+        description:
+          status === "published"
+            ? "Your blog post has been published."
+            : "Your blog post has been saved as draft.",
       });
       router.push("/dashboard");
     } catch (error) {
@@ -126,19 +154,19 @@ export default function WritePage() {
   };
 
   const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0]
+    const file = e.target.files?.[0];
 
     if (file) {
       // Set preview
-      const reader = new FileReader()
+      const reader = new FileReader();
       reader.onloadend = () => {
-        setImagePreview(reader.result as string)
-      }
-      reader.readAsDataURL(file)
+        setImagePreview(reader.result as string);
+      };
+      reader.readAsDataURL(file);
     } else {
-      setImagePreview(null)
+      setImagePreview(null);
     }
-  }
+  };
 
   const uploadToCloudinary = async (imagePreview: string) => {
     try {
@@ -146,40 +174,46 @@ export default function WritePage() {
       const uploadPreset = process.env.NEXT_PUBLIC_CLOUDINARY_UPLOAD_PRESET;
 
       if (!cloudName || !uploadPreset) {
-        throw new Error('Cloudinary configuration is missing. Please check your environment variables.');
+        throw new Error(
+          "Cloudinary configuration is missing. Please check your environment variables."
+        );
       }
 
       // Create a FormData instance
       const formData = new FormData();
-      
+
       // Convert base64 to blob
       const base64Response = await fetch(imagePreview);
       const blob = await base64Response.blob();
-      
+
       // Add the file to formData
-      formData.append('file', blob);
-      formData.append('upload_preset', uploadPreset);
-      
+      formData.append("file", blob);
+      formData.append("upload_preset", uploadPreset);
+
       // Upload to Cloudinary
       const uploadResponse = await fetch(
         `https://api.cloudinary.com/v1_1/${cloudName}/image/upload`,
         {
-          method: 'POST',
+          method: "POST",
           body: formData,
         }
       );
 
       if (!uploadResponse.ok) {
         const errorData = await uploadResponse.json();
-        throw new Error(`Cloudinary upload failed: ${errorData.error?.message || 'Unknown error'}`);
+        throw new Error(
+          `Cloudinary upload failed: ${
+            errorData.error?.message || "Unknown error"
+          }`
+        );
       }
 
       const uploadData = await uploadResponse.json();
       return uploadData.secure_url;
-
     } catch (error) {
       console.error("Cloudinary upload failed:", error);
-      const errorMessage = error instanceof Error ? error.message : 'Failed to upload image';
+      const errorMessage =
+        error instanceof Error ? error.message : "Failed to upload image";
       toast({
         title: "Image Upload Failed",
         description: errorMessage,
@@ -191,7 +225,7 @@ export default function WritePage() {
 
   return (
     <div className="flex min-h-screen">
-      <div className={`flex-1 ${showChat ? 'w-2/3' : 'w-full'}`}>
+      <div className={`flex-1 ${showChat ? "w-2/3" : "w-full"}`}>
         <div className="container py-6 px-4">
           <div className="mb-6 flex justify-between items-center">
             <div>
@@ -223,8 +257,56 @@ export default function WritePage() {
                     <FormItem>
                       <FormLabel>Title</FormLabel>
                       <FormControl>
-                        <Input placeholder="Enter your blog title" {...field} />
+                        <Input placeholder="Enter title" {...field} />
                       </FormControl>
+                      <FormDescription>
+                        The title of your blog post
+                      </FormDescription>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                <FormField
+                  control={form.control}
+                  name="slug"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>URL Slug</FormLabel>
+                      <FormControl>
+                        <div className="flex gap-2">
+                          <Input
+                            placeholder="url-friendly-slug"
+                            {...field}
+                            onChange={(e) => {
+                              // Convert to lowercase and replace spaces with hyphens
+                              const value = e.target.value
+                                .toLowerCase()
+                                .replace(/\s+/g, "-");
+                              field.onChange(value);
+                            }}
+                          />
+                          <Button
+                            type="button"
+                            variant="outline"
+                            onClick={() => {
+                              const generatedSlug = slugify(
+                                form.getValues("title")
+                              );
+                              form.setValue("slug", generatedSlug, {
+                                shouldValidate: true,
+                                shouldDirty: true,
+                              });
+                            }}
+                          >
+                            Generate from Title
+                          </Button>
+                        </div>
+                      </FormControl>
+                      <FormDescription>
+                        The URL-friendly version of the title (e.g.,
+                        my-blog-post)
+                      </FormDescription>
                       <FormMessage />
                     </FormItem>
                   )}
@@ -237,7 +319,10 @@ export default function WritePage() {
                     <FormItem>
                       <FormLabel>Meta Title</FormLabel>
                       <FormControl>
-                        <Input placeholder="Enter meta title for SEO" {...field} />
+                        <Input
+                          placeholder="Enter meta title for SEO"
+                          {...field}
+                        />
                       </FormControl>
                       <FormDescription>
                         This will be used as the title in search engine results
@@ -254,9 +339,9 @@ export default function WritePage() {
                     <FormItem>
                       <FormLabel>Meta Description</FormLabel>
                       <FormControl>
-                        <Textarea 
-                          placeholder="Enter meta description for SEO" 
-                          {...field} 
+                        <Textarea
+                          placeholder="Enter meta description for SEO"
+                          {...field}
                         />
                       </FormControl>
                       <FormDescription>
@@ -274,9 +359,9 @@ export default function WritePage() {
                     <FormItem>
                       <FormLabel>Keywords</FormLabel>
                       <FormControl>
-                        <Input 
-                          placeholder="Enter keywords (comma separated)" 
-                          {...field} 
+                        <Input
+                          placeholder="Enter keywords (comma separated)"
+                          {...field}
                         />
                       </FormControl>
                       <FormDescription>
@@ -398,7 +483,9 @@ export default function WritePage() {
                           )}
                         </div>
                       </FormControl>
-                      <FormDescription>Upload an image for your blog post</FormDescription>
+                      <FormDescription>
+                        Upload an image for your blog post
+                      </FormDescription>
                       <FormMessage />
                     </FormItem>
                   )}
@@ -419,7 +506,9 @@ export default function WritePage() {
                     type="button"
                     onClick={() => {
                       form.setValue("status", "published");
-                      form.handleSubmit((data) => onSubmit(data, "published"))();
+                      form.handleSubmit((data) =>
+                        onSubmit(data, "published")
+                      )();
                     }}
                     disabled={isLoading}
                     variant="default"
