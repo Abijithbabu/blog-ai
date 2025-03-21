@@ -10,7 +10,7 @@ import {
 import { useRouter } from "next/navigation";
 import axios, { AxiosError } from "axios";
 import api from "@/axios-instance";
-
+import Cookies from "js-cookie";
 interface User {
   id: string;
   name: string;
@@ -93,7 +93,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const logout = async () => {
     try {
-      await axios.post("/api/auth/logout");
+      Cookies.remove("auth-token");
       setUser(null);
       router.push("/");
     } catch (error) {
