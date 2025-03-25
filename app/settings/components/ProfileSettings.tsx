@@ -24,6 +24,7 @@ import { useRef, useState, useEffect } from "react";
 import { useToast } from "@/components/ui/use-toast";
 import api from "@/axios-instance";
 import { useAuth } from "@/context/auth-context";
+import { Theme } from "@/components/Theme";
 
 const profileFormSchema = z
   .object({
@@ -139,6 +140,7 @@ export function ProfileSettings() {
 
   return (
     <div className="space-y-6">
+      <Theme/>
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">

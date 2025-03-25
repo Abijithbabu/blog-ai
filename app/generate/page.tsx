@@ -444,7 +444,7 @@ export default function GeneratePage() {
   return (
     <div className="container mx-auto py-6 px-4">
       <div className="mb-6">
-        <h1 className="text-3xl font-bold">Generate Blog with AI</h1>
+        <h1 className="text-3xl">Generate Blog with AI</h1>
         <p className="text-muted-foreground mt-1">
           Create SEO-optimized blog posts using artificial intelligence.
         </p>

@@ -5,6 +5,7 @@ import "./globals.css"
 import { AuthProvider } from "@/context/auth-context"
 import { Toaster } from "@/components/ui/toaster"
 import DashboardLayout from "./dashboard-layout"
+import { ThemeProvider } from "@/providers/theme-provider"
 
 const poppins = Poppins({
   subsets: ["latin"],
@@ -23,12 +24,14 @@ export default function RootLayout({
   children: React.ReactNode
 }>) {
   return (
-    <html lang="en">
+    <html lang="en" suppressHydrationWarning>
       <body className={poppins.className}>
-        <AuthProvider>
-          <DashboardLayout>{children}</DashboardLayout>
-          <Toaster />
-        </AuthProvider>
+        <ThemeProvider>
+          <AuthProvider>
+            <DashboardLayout>{children}</DashboardLayout>
+            <Toaster />
+          </AuthProvider>
+        </ThemeProvider>
       </body>
     </html>
   )

@@ -229,7 +229,7 @@ export default function WritePage() {
         <div className="container py-6 px-4">
           <div className="mb-6 flex justify-between items-center">
             <div>
-              <h1 className="text-3xl font-bold">Write a Blog Post</h1>
+              <h1 className="text-3xl">Write a Blog Post</h1>
               <p className="text-muted-foreground mt-1">
                 Create and publish your blog post
               </p>

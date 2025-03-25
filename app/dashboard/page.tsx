@@ -98,7 +98,7 @@ export default function DashboardPage() {
   return (
     <div className="container mx-auto py-6 px-4">
       <div className="flex items-center justify-between mb-6">
-        <h1 className="text-3xl font-bold">
+        <h1 className="text-3xl">
           Hey {user?.name || "there"}, let&apos;s create some blog posts!
         </h1>
       </div>
@@ -165,7 +165,9 @@ export default function DashboardPage() {
                   </div>
 
                   <CardHeader className="p-4">
-                    <CardTitle className="line-clamp-2 text-xl">{post.title}</CardTitle>
+                    <CardTitle className="line-clamp-2 text-xl">
+                      {post.title}
+                    </CardTitle>
                     <CardDescription>
                       Created: {new Date(post.createdAt).toLocaleDateString()}
                       {post.readTime > 0 && ` • ${post.readTime} min read`}
@@ -190,16 +192,18 @@ export default function DashboardPage() {
                   <CardFooter className="flex justify-between mt-auto px-4">
                     <Link href={`/write/${post._id}`}>
                       <Button variant="outline" size="sm">
-                        Edit <ArrowRight className="ml-2 h-4 w-4" />
+                        <PencilLine className="mr-2 h-4 w-4" />
+                        Edit
                       </Button>
                     </Link>
                     <Button
                       variant="ghost"
                       size="sm"
-                      className="text-red-600 hover:text-red-700"
+                      className="hover:text-red-500"
                       onClick={() => setDeletePostId(post._id)}
                     >
-                      <Trash2 className="h-4 w-4" />
+                      <Trash2 className="mr-2 h-4 w-4" />
+                      Delete
                     </Button>
                   </CardFooter>
                 </Card>

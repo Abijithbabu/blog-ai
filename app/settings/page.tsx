@@ -19,34 +19,12 @@ export default function SettingsPage() {
           </p>
         </div>
 
-        <Tabs defaultValue="profile" className="space-y-8">
-          <TabsList className="w-full justify-start border-b rounded-none h-auto p-0 bg-transparent">
-            <div className="container flex-wrap gap-2 flex">
-              <TabsTrigger
-                value="profile"
-                className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground rounded-t-lg rounded-b-none px-6"
-              >
-                Profile
-              </TabsTrigger>
-              <TabsTrigger
-                value="subscription"
-                className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground rounded-t-lg rounded-b-none px-6"
-              >
-                Subscription
-              </TabsTrigger>
-              <TabsTrigger
-                value="personalize"
-                className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground rounded-t-lg rounded-b-none px-6"
-              >
-                Personalize
-              </TabsTrigger>
-              <TabsTrigger
-                value="api"
-                className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground rounded-t-lg rounded-b-none px-6"
-              >
-                API Keys
-              </TabsTrigger>
-            </div>
+        <Tabs defaultValue="profile">
+          <TabsList>
+            <TabsTrigger value="profile">Profile</TabsTrigger>
+            <TabsTrigger value="subscription">Subscription</TabsTrigger>
+            <TabsTrigger value="personalize">Personalize</TabsTrigger>
+            <TabsTrigger value="api">API Keys</TabsTrigger>
           </TabsList>
 
           <div className="mt-6">

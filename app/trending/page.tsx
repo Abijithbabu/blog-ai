@@ -101,7 +101,12 @@ export default function TrendingPage() {
   if (isLoading) {
     return (
       <div className="container mx-auto p-4 space-y-4">
-        <h1 className="text-2xl font-bold mb-4">Trending Topics</h1>
+        <div>
+          <h1 className="text-3xl">Trending Topics</h1>
+          <p className="text-muted-foreground mt-1">
+            Discover trending topics relevant to your business
+          </p>
+        </div>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
           {[1, 2, 3, 4, 5, 6].map((i) => (
             <Card key={i}>
@@ -137,7 +142,7 @@ export default function TrendingPage() {
       <div className="container mx-auto py-6 px-4">
         <div className="flex items-center justify-between mb-6">
           <div>
-            <h1 className="text-3xl font-bold">Trending Topics</h1>
+            <h1 className="text-3xl">Trending Topics</h1>
             <p className="text-muted-foreground mt-1">
               Discover trending topics relevant to your business
             </p>

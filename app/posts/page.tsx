@@ -99,7 +99,7 @@ export default function BlogsPage() {
     <div className="container mx-auto py-6 px-4">
       <div className="flex items-center justify-between mb-6">
         <div>
-          <h1 className="text-3xl font-bold">Your Blog Posts</h1>
+          <h1 className="text-3xl">Your Blog Posts</h1>
           <p className="text-muted-foreground mt-1">
             Manage and track all your published and draft blog posts in one
             place.

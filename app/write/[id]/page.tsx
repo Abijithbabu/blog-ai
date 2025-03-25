@@ -250,7 +250,7 @@ export default function EditPage() {
           <div className="flex-none border-b p-4">
             <div className="container flex justify-between items-center">
               <div>
-                <h1 className="text-3xl font-bold">Edit Blog Post</h1>
+                <h1 className="text-3xl">Edit Blog Post</h1>
                 <p className="text-muted-foreground mt-1">
                   Update your blog post
                 </p>
