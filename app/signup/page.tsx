@@ -53,7 +53,10 @@ export default function SignupPage() {
     } catch (error) {
       toast({
         title: "Error",
-        description: "Failed to create account. Please try again.",
+        description:
+          error instanceof Error
+            ? error.message
+            : "Failed to create account. Please try again.",
         variant: "destructive",
       });
     } finally {

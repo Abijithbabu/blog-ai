@@ -29,7 +29,6 @@ import {
 import { useAuth } from "@/context/auth-context";
 import api from "@/axios-instance";
 import {
-  CheckCircle2,
   Building2,
   Users,
   Tags,
@@ -203,7 +202,7 @@ export default function OnboardingPage() {
   };
 
   return (
-    <div className="h-screen flex flex-col bg-gray-50">
+    <div className="h-screen flex flex-col bg-background">
       <Navbar />
       <div className="flex container mx-auto px-4 py-4 max-w-4xl flex-col">
         <div className="mb-4 text-center">
@@ -232,17 +231,17 @@ export default function OnboardingPage() {
                     isActive
                       ? "text-primary"
                       : isDone
-                      ? "text-blue-400"
-                      : "text-gray-400"
+                      ? "text-primary/80"
+                      : "text-muted-foreground"
                   }`}
                 >
                   <div
                     className={`absolute z-10 flex items-center justify-center w-8 h-8 rounded-full border-2 ${
                       isActive
-                        ? "border-primary bg-white"
+                        ? "border-primary bg-background"
                         : isDone
-                        ? "border-blue-400 bg-blue-400 text-white"
-                        : "border-gray-300 bg-white"
+                        ? "border-primary/80 bg-primary/80 text-background"
+                        : "border-muted bg-background"
                     }`}
                   >
                     {isDone ? (
@@ -255,7 +254,7 @@ export default function OnboardingPage() {
                   {step.number < steps.length && (
                     <div
                       className={`absolute top-4 left-1/2 w-full h-0.5 z-0 ${
-                        isDone ? "bg-blue-400" : "bg-gray-300"
+                        isDone ? "bg-primary/80" : "bg-muted"
                       }`}
                     />
                   )}
@@ -267,7 +266,7 @@ export default function OnboardingPage() {
 
         <div className="flex-1 min-h-96 grid grid-cols-5 gap-4">
           {/* Main Form Card */}
-          <Card className="col-span-3 border-none shadow-lg">
+          <Card className="col-span-3 border-none shadow-lg bg-card">
             <CardContent className="p-4">
               <Form {...form}>
                 <form
@@ -287,6 +286,7 @@ export default function OnboardingPage() {
                               <Input
                                 placeholder="Enter your business name"
                                 {...field}
+                                className="bg-background"
                               />
                             </FormControl>
                             <FormMessage />
@@ -305,7 +305,7 @@ export default function OnboardingPage() {
                               defaultValue={field.value}
                             >
                               <FormControl>
-                                <SelectTrigger>
+                                <SelectTrigger className="bg-background">
                                   <SelectValue placeholder="Select your industry" />
                                 </SelectTrigger>
                               </FormControl>
@@ -336,6 +336,7 @@ export default function OnboardingPage() {
                             <Textarea
                               placeholder="E.g., small business owners, young professionals"
                               {...field}
+                              className="bg-background"
                             />
                           </FormControl>
                           <FormDescription>
@@ -359,6 +360,7 @@ export default function OnboardingPage() {
                             <Textarea
                               placeholder="E.g., digital marketing, SEO, content creation"
                               {...field}
+                              className="bg-background"
                             />
                           </FormControl>
                           <FormDescription>
@@ -386,7 +388,7 @@ export default function OnboardingPage() {
                             defaultValue={field.value}
                           >
                             <FormControl>
-                              <SelectTrigger>
+                              <SelectTrigger className="bg-background">
                                 <SelectValue placeholder="Select preferred sources" />
                               </SelectTrigger>
                             </FormControl>
@@ -446,7 +448,7 @@ export default function OnboardingPage() {
           </Card>
 
           {/* Context Card */}
-          <Card className="col-span-2 border-none shadow-lg bg-primary/5">
+          <Card className="col-span-2 border-none shadow-lg bg-primary/5 dark:bg-primary/10">
             <CardContent className="p-4">
               <h2 className="text-xl font-semibold mb-3">
                 {
