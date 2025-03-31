@@ -17,7 +17,7 @@ import {
   FormLabel,
   FormMessage,
 } from "@/components/ui/form";
-import { Editor } from "@tinymce/tinymce-react";
+import TextEditor from "@/components/Editor";
 import api from "@/axios-instance";
 import { Textarea } from "@/components/ui/textarea";
 import { slugify } from "@/lib/utils";
@@ -387,43 +387,9 @@ export default function EditPage() {
                       <FormItem>
                         <FormLabel>Content</FormLabel>
                         <FormControl>
-                          <Editor
-                            apiKey="x02r3sx3hyrz2eadicgxwwjmmdij2ozk3b7aktdpkyw4vxyu"
-                            value={field.value}
-                            onEditorChange={(content) => {
-                              field.onChange(content);
-                            }}
-                            init={{
-                              height: 500,
-                              menubar: true,
-                              plugins: [
-                                "advlist",
-                                "autolink",
-                                "lists",
-                                "link",
-                                "image",
-                                "charmap",
-                                "preview",
-                                "anchor",
-                                "searchreplace",
-                                "visualblocks",
-                                "code",
-                                "fullscreen",
-                                "insertdatetime",
-                                "media",
-                                "table",
-                                "code",
-                                "help",
-                                "wordcount",
-                              ],
-                              toolbar:
-                                "undo redo | formatselect | " +
-                                "bold italic backcolor | alignleft aligncenter " +
-                                "alignright alignjustify | bullist numlist outdent indent | " +
-                                "removeformat | help",
-                              content_style:
-                                "body { font-family:Helvetica,Arial,sans-serif; font-size:14px }",
-                            }}
+                          <TextEditor
+                            data={field.value}
+                            dispatch={field.onChange}
                           />
                         </FormControl>
                         <FormMessage />

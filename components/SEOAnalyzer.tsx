@@ -131,7 +131,7 @@ export function SEOAnalyzer({ seoAnalysis }: SEOAnalysisProps) {
               {keywordDensity.byKeyword && (
                 <div className="mt-1">
                   {Object.entries(keywordDensity.byKeyword).map(([keyword, density]) => (
-                    <span key={keyword} className="text-xs bg-gray-100 rounded-full px-2 py-0.5 mr-1">
+                    <span key={keyword} className="text-xs bg-gray-100 dark:bg-gray-800 rounded-full px-2 py-0.5 mr-1">
                       {keyword}: {density}
                     </span>
                   ))}

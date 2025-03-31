@@ -94,7 +94,7 @@ export function Sidebar({ className }: SidebarProps) {
         {
           label: "Scraper Tool",
           icon: Globe,
-          href: "#/scraper",
+          href: "/scraper",
         },
       ],
     },

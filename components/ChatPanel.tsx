@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/components/ui/use-toast";
 import { Badge } from "@/components/ui/badge";
 import { Slider } from "@/components/ui/slider";
@@ -10,6 +11,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { SEOAnalyzer } from "./SEOAnalyzer";
 import api from "@/axios-instance";
 import axios from "axios";
+import LoadingResponse from "./LoadingResponse";
 
 export interface ContentSuggestion {
   title: string;
@@ -80,6 +82,8 @@ interface ChatPanelProps {
 export function ChatPanel({ onSuggestionSelect }: ChatPanelProps) {
   const [topic, setTopic] = useState("");
   const [wordCount, setWordCount] = useState(800);
+  const [existingContent, setExistingContent] = useState("");
+  const [customPrompt, setCustomPrompt] = useState("");
   const [response, setResponse] = useState<ContentResponse | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [activeTab, setActiveTab] = useState("content");
@@ -97,33 +101,21 @@ export function ChatPanel({ onSuggestionSelect }: ChatPanelProps) {
 
     setIsLoading(true);
     try {
-      console.log("Sending research request:", { topic, wordCount });
+      console.log("Sending research request:", {
+        topic,
+        wordCount,
+        existingContent,
+        customPrompt,
+      });
       const response = await api.post<ContentResponse>("/content/research", {
         topic,
         wordCount,
+        existingContent,
+        customPrompt,
       });
-      
-      // Clean the response data by removing "**" from all text fields
-      const cleanedData = {
-        ...response.data,
-        suggestion: {
-          ...response.data.suggestion,
-          title: response.data.suggestion.title.replace(/\*\*/g, '').trim(),
-          meta: response.data.suggestion.meta.replace(/\*\*/g, '').trim(),
-          keywords: response.data.suggestion.keywords.map(keyword => 
-            keyword.replace(/\*\*/g, '').trim()
-          ),
-          outline: response.data.suggestion.outline.replace(/\*\*/g, '').trim(),
-        }
-      };
-
-      console.log("Cleaned response:", cleanedData);
-      if (!cleanedData || !cleanedData.suggestion) {
-        throw new Error("Invalid response format");
-      }
-      setResponse(cleanedData);
+      setResponse(response.data);
       // If SEO analysis is available, switch to that tab automatically
-      if (cleanedData.seoAnalysis) {
+      if (response.data.seoAnalysis) {
         setActiveTab("seo");
       }
     } catch (error) {
@@ -161,11 +153,13 @@ export function ChatPanel({ onSuggestionSelect }: ChatPanelProps) {
       onSuggestionSelect(response.suggestion);
       setResponse(null);
       setTopic("");
+      setExistingContent("");
+      setCustomPrompt("");
     }
   };
 
   return (
-    <div className="w-96 border-l p-6 bg-gray-50">
+    <div className="w-96 border-l p-6">
       <div className="h-full flex flex-col">
         <h2 className="text-lg font-semibold mb-4">AI Content Research</h2>
         <p className="text-sm text-muted-foreground mb-4">
@@ -203,6 +197,16 @@ export function ChatPanel({ onSuggestionSelect }: ChatPanelProps) {
             />
           </div>
 
+          <div>
+            <Textarea
+              placeholder="Custom prompt (optional)..."
+              value={customPrompt}
+              onChange={(e) => setCustomPrompt(e.target.value)}
+              disabled={isLoading}
+              rows={5}
+            />
+          </div>
+
           <Button
             className="w-full"
             onClick={handleResearch}
@@ -211,7 +215,7 @@ export function ChatPanel({ onSuggestionSelect }: ChatPanelProps) {
             {isLoading ? "Researching..." : "Research Topic"}
           </Button>
         </div>
-
+        <LoadingResponse loading={isLoading} />
         {response && (
           <div className="mt-6 flex-1 overflow-auto">
             <Tabs

@@ -11,7 +11,8 @@ export function middleware(request: NextRequest) {
     path.includes("/write") ||
     path.includes("/generate") ||
     path.includes("/posts") ||
-    path.includes("/settings")
+    path.includes("/settings") ||
+    path.includes("/scraper")
 
   // Define paths that should redirect logged-in users
   const isAuthPath = path === "/login" || path === "/signup"
@@ -40,6 +41,7 @@ export const config = {
     "/generate/:path*",
     "/posts/:path*",
     "/settings/:path*",
+    "/scraper/:path*",
     "/login",
     "/signup",
   ],
